@@ -11,6 +11,8 @@ This MCP server provides a bridge between Claude and ComfyUI, allowing you to:
 - Retrieve generated images
 - List available models and workflows
 
+**Special Focus**: Optimized workflows for Crisis Corps logo and branding generation!
+
 ## Features
 
 - **Platform Agnostic**: Works with any ComfyUI installation (local, remote, containerized)
@@ -18,10 +20,11 @@ This MCP server provides a bridge between Claude and ComfyUI, allowing you to:
 - **Workflow Support**: Load and execute complex ComfyUI workflows
 - **Queue Management**: Monitor generation progress
 - **Flexible Output**: Return images as base64 or file paths
+- **Logo Optimized**: Includes pre-built workflows for logo generation
 
 ## Prerequisites
 
-- ComfyUI installed and running (see [ComfyUI Installation](https://github.com/comfyanonymous/ComfyUI))
+- ComfyUI installed and running (see [Setup Guide](setup_comfyui.md))
 - Python 3.10+
 - MCP SDK
 
@@ -36,27 +39,29 @@ cd mcp-comfyui
 pip install -e .
 ```
 
-## Configuration
+## Quick Start
 
-### Environment Variables
-
+### 1. Start ComfyUI
 ```bash
-# ComfyUI connection settings
-COMFYUI_HOST=localhost  # ComfyUI server host
-COMFYUI_PORT=8188       # ComfyUI server port
+# If installed locally
+cd /path/to/ComfyUI
+python main.py --listen
 
-# Output settings
-COMFYUI_OUTPUT_DIR=/path/to/comfyui/output  # Where ComfyUI saves images
-MCP_RETURN_FORMAT=base64  # 'base64' or 'filepath'
-
-# Optional authentication
-COMFYUI_API_KEY=your_api_key_if_needed
+# Or use Docker
+docker-compose up -d
 ```
 
-### Claude Desktop Configuration
+### 2. Configure MCP
+```bash
+# Copy example config
+cp .env.example .env
 
-Add to your Claude Desktop config:
+# Edit .env with your settings
+# COMFYUI_HOST=localhost
+# COMFYUI_PORT=8188
+```
 
+### 3. Add to Claude Desktop
 ```json
 {
   "mcpServers": {
@@ -71,6 +76,43 @@ Add to your Claude Desktop config:
     }
   }
 }
+```
+
+## Logo Generation Examples
+
+### Generate Crisis Corps Logo
+```python
+# Using pre-built workflow
+result = await execute_workflow(
+    workflow_name="crisis_corps_logo.json"
+)
+
+# Custom generation
+result = await generate_image(
+    prompt="Crisis Corps logo, heroic robot emblem, orange and blue, minimalist design, vector style",
+    negative_prompt="realistic, photo, 3d render, complex",
+    width=1024,
+    height=1024,
+    steps=35,
+    cfg_scale=10
+)
+```
+
+### Generate Variations
+```python
+# App icon
+icon = await generate_image(
+    prompt="Crisis Corps app icon, robot head, rounded square, flat design, orange accent",
+    width=512,
+    height=512
+)
+
+# Banner logo
+banner = await generate_image(
+    prompt="Crisis Corps banner, horizontal logo, robot silhouettes, emergency orange",
+    width=1920,
+    height=480
+)
 ```
 
 ## Available Tools
@@ -108,7 +150,7 @@ Get all available workflow files.
 
 ```python
 list_workflows()
-# Returns: ["logo_generator.json", "texture_creator.json", ...]
+# Returns: ["logo_generator.json", "crisis_corps_logo.json", ...]
 ```
 
 ### get_queue_status
@@ -150,55 +192,24 @@ Stop the current generation.
 interrupt_generation()
 ```
 
-## Usage Examples
+## Pre-Built Workflows
 
-### Generate a Logo
+The `workflows/` directory contains optimized workflows for Crisis Corps branding:
 
-```python
-# Simple logo generation
-result = await generate_image(
-    prompt="minimalist robot head logo, clean lines, tech startup style, orange and blue",
-    negative_prompt="complex, detailed, photorealistic",
-    width=1024,
-    height=1024,
-    steps=30
-)
-```
+1. **logo_generator.json** - General purpose logo creation
+2. **crisis_corps_logo.json** - Specific Crisis Corps branding (4 variations)
+3. **robot_emblem.json** - Military-style badges and emblems (6 variations)
+4. **text_logo_variations.json** - Typography-focused designs
 
-### Use a Custom Workflow
+See [workflows/README.md](workflows/README.md) for detailed documentation.
 
-```python
-# Execute a pre-saved workflow for consistent results
-result = await execute_workflow(
-    workflow_name="brand_logo_generator",
-    inputs={
-        "company_name": "Crisis Corps",
-        "style": "modern",
-        "colors": ["#FF6B35", "#004E98"]
-    }
-)
-```
+## Brand Guidelines
 
-### Batch Generation
-
-```python
-# Generate multiple variations
-for i in range(4):
-    await generate_image(
-        prompt="Crisis Corps robot mascot, friendly, heroic",
-        seed=i * 1000  # Different seeds for variations
-    )
-```
-
-## Workflow Management
-
-Workflows should be saved in ComfyUI's workflow directory. The MCP server can load and execute any valid ComfyUI workflow JSON file.
-
-### Creating Logo-Specific Workflows
-
-1. Design your workflow in ComfyUI's web interface
-2. Save it with a descriptive name (e.g., `logo_generator.json`)
-3. The workflow will be available via `list_workflows()`
+For consistent Crisis Corps branding, see [examples/brand_guidelines.md](examples/brand_guidelines.md) which includes:
+- Color codes (#FF6B35 orange, #004E98 blue)
+- Typography guidelines
+- Prompt engineering tips
+- Style references
 
 ## Architecture
 
@@ -235,12 +246,14 @@ Contributions are welcome! Please:
 
 ## TODO
 
-- [ ] Add LoRA support
-- [ ] Implement ControlNet workflows
-- [ ] Add image-to-image generation
+- [ ] Add LoRA support for logo-specific models
+- [ ] Implement ControlNet workflows for consistent shapes
+- [ ] Add image-to-image generation for logo variations
 - [ ] Support for SDXL specific features
 - [ ] Batch processing optimizations
 - [ ] Caching for frequently used workflows
+- [ ] Auto-background removal for logos
+- [ ] SVG conversion support
 
 ## License
 
@@ -250,3 +263,4 @@ MIT License - see LICENSE file for details
 
 - [ComfyUI](https://github.com/comfyanonymous/ComfyUI) by comfyanonymous
 - [Model Context Protocol](https://modelcontextprotocol.io/) by Anthropic
+- Crisis Corps branding examples included with permission

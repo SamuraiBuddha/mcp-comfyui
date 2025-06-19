@@ -1,0 +1,59 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    }
+  },
+  "2": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "Crisis Corps logo, heroic robot silhouette, emergency response symbol, orange and blue dual tone, minimalist design, bold geometric shapes, shield emblem with robot head, rescue team insignia, professional logo, vector style, clean lines, white background, modern tech branding, humanitarian symbol, protective stance, strong typography",
+      "clip": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "photograph, realistic, 3d render, gradient shadows, complex details, photorealistic textures, human features, organic shapes, nature elements, soft edges, watercolor, painterly, artistic effects, hand drawn",
+      "clip": ["1", 1]
+    }
+  },
+  "4": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 4
+    }
+  },
+  "5": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": -1,
+      "steps": 35,
+      "cfg": 10.0,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0,
+      "model": ["1", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["5", 0],
+      "vae": ["1", 2]
+    }
+  },
+  "7": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "crisis_corps_logo",
+      "images": ["6", 0]
+    }
+  }
+}
