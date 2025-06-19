@@ -1,24 +1,37 @@
-# ComfyUI MCP Server
+# ComfyUI MCP Server - Enhanced Edition
 
-A Model Context Protocol (MCP) server that enables Claude to interact with ComfyUI for AI image generation using Stable Diffusion.
+A Model Context Protocol (MCP) server that enables Claude to interact with ComfyUI for AI image generation using Stable Diffusion - now with full API control!
 
 ## Overview
 
-This MCP server provides a bridge between Claude and ComfyUI, allowing you to:
-- Generate images using text prompts
-- Execute saved ComfyUI workflows
+This enhanced MCP server provides a comprehensive bridge between Claude and ComfyUI, allowing you to:
+- Generate images with full control over models, samplers, and schedulers
+- Build custom workflows programmatically
+- Execute and manage saved ComfyUI workflows
+- Upload images for img2img workflows
+- List and use LoRAs, embeddings, and custom nodes
 - Manage the generation queue
 - Retrieve generated images
-- List available models and workflows
 
 **Special Focus**: Optimized workflows for Crisis Corps logo and branding generation!
+
+## New Features in v0.2.0
+
+- **Model Swapping**: Change checkpoints on the fly
+- **Workflow Builder**: Create workflows programmatically without the UI
+- **Advanced Sampling**: Control samplers and schedulers
+- **LoRA Support**: List and use LoRA models (coming soon)
+- **Node Discovery**: Get all available node types from ComfyUI
+- **Image Upload**: Upload images for img2img and ControlNet workflows
+- **Queue Management**: Clear queue, check status, interrupt generations
+- **Workflow Saving**: Save custom workflows for reuse
 
 ## Features
 
 - **Platform Agnostic**: Works with any ComfyUI installation (local, remote, containerized)
-- **Simple API**: Straightforward functions for common tasks
-- **Workflow Support**: Load and execute complex ComfyUI workflows
-- **Queue Management**: Monitor generation progress
+- **Full API Access**: Complete control over ComfyUI's capabilities
+- **Workflow Support**: Load, execute, build, and save complex workflows
+- **Queue Management**: Monitor and control generation progress
 - **Flexible Output**: Return images as base64 or file paths
 - **Logo Optimized**: Includes pre-built workflows for logo generation
 
@@ -78,47 +91,10 @@ cp .env.example .env
 }
 ```
 
-## Logo Generation Examples
-
-### Generate Crisis Corps Logo
-```python
-# Using pre-built workflow
-result = await execute_workflow(
-    workflow_name="crisis_corps_logo.json"
-)
-
-# Custom generation
-result = await generate_image(
-    prompt="Crisis Corps logo, heroic robot emblem, orange and blue, minimalist design, vector style",
-    negative_prompt="realistic, photo, 3d render, complex",
-    width=1024,
-    height=1024,
-    steps=35,
-    cfg_scale=10
-)
-```
-
-### Generate Variations
-```python
-# App icon
-icon = await generate_image(
-    prompt="Crisis Corps app icon, robot head, rounded square, flat design, orange accent",
-    width=512,
-    height=512
-)
-
-# Banner logo
-banner = await generate_image(
-    prompt="Crisis Corps banner, horizontal logo, robot silhouettes, emergency orange",
-    width=1920,
-    height=480
-)
-```
-
 ## Available Tools
 
 ### generate_image
-Generate an image from a text prompt using the default workflow.
+Generate an image with full control over all parameters.
 
 ```python
 generate_image(
@@ -128,7 +104,51 @@ generate_image(
     height=512,
     steps=20,
     cfg_scale=7.0,
-    seed=-1  # Random seed
+    seed=-1,  # Random seed
+    model="sd_xl_base_1.0.safetensors",
+    sampler="euler",
+    scheduler="normal"
+)
+```
+
+### build_workflow
+Create a custom workflow programmatically.
+
+```python
+build_workflow(
+    nodes=[
+        {
+            "id": "1",
+            "type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+        },
+        {
+            "id": "2",
+            "type": "CLIPTextEncode",
+            "inputs": {"text": "robot logo", "clip": ["1", 1]}
+        },
+        {
+            "id": "3",
+            "type": "KSampler",
+            "inputs": {
+                "model": ["1", 0],
+                "positive": ["2", 0],
+                "seed": 42,
+                "steps": 20
+            }
+        }
+    ]
+)
+```
+
+### save_workflow
+Save a workflow for future use.
+
+```python
+save_workflow(
+    name="my_logo_workflow",
+    workflow=built_workflow,
+    description="Custom workflow for Crisis Corps logos"
 )
 ```
 
@@ -142,6 +162,48 @@ execute_workflow(
         "prompt": "Crisis Corps emblem",
         "style": "military insignia"
     }
+)
+```
+
+### list_models
+Get all available model checkpoints.
+
+```python
+list_models()
+# Returns: ["sd_xl_base_1.0.safetensors", "dreamshaper_8.safetensors", ...]
+```
+
+### list_samplers
+Get available sampling methods.
+
+```python
+list_samplers()
+# Returns: ["euler", "euler_ancestral", "dpm_2", "dpm_2_ancestral", ...]
+```
+
+### list_schedulers
+Get available noise schedulers.
+
+```python
+list_schedulers()
+# Returns: ["normal", "karras", "exponential", "sgm_uniform", ...]
+```
+
+### get_node_types
+Discover all available ComfyUI nodes.
+
+```python
+get_node_types()
+# Returns complete node definitions with inputs/outputs
+```
+
+### upload_image
+Upload an image for img2img workflows.
+
+```python
+upload_image(
+    image_path="/path/to/image.png",
+    name="reference_image"
 )
 ```
 
@@ -177,19 +239,65 @@ get_image(prompt_id="abc123")
 # Returns: base64 encoded image or filepath
 ```
 
-### list_models
-List available model checkpoints.
-
-```python
-list_models()
-# Returns: ["sd_xl_base_1.0.safetensors", "dreamshaper_8.safetensors", ...]
-```
-
 ### interrupt_generation
 Stop the current generation.
 
 ```python
 interrupt_generation()
+```
+
+### clear_queue
+Clear all pending generations.
+
+```python
+clear_queue()
+```
+
+## Logo Generation Examples
+
+### Generate Crisis Corps Logo with Different Models
+```python
+# SDXL for high quality
+result = await generate_image(
+    prompt="Crisis Corps logo, heroic robot emblem, orange and blue",
+    model="sd_xl_base_1.0.safetensors",
+    width=1024,
+    height=1024,
+    steps=35
+)
+
+# DreamShaper for stylized look
+result = await generate_image(
+    prompt="Crisis Corps logo, heroic robot emblem, orange and blue",
+    model="dreamshaper_8.safetensors",
+    sampler="dpm_2_ancestral",
+    scheduler="karras"
+)
+```
+
+### Build Custom Logo Workflow
+```python
+# Create a workflow with LoRA for consistent style
+workflow = await build_workflow(
+    nodes=[
+        {"id": "1", "type": "CheckpointLoaderSimple", 
+         "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}},
+        {"id": "2", "type": "LoraLoader",
+         "inputs": {"model": ["1", 0], "clip": ["1", 1], 
+                   "lora_name": "logo_style.safetensors",
+                   "strength_model": 0.8, "strength_clip": 0.8}},
+        {"id": "3", "type": "CLIPTextEncode",
+         "inputs": {"text": "Crisis Corps emblem", "clip": ["2", 1]}},
+        # ... rest of workflow
+    ]
+)
+
+# Save for reuse
+await save_workflow(
+    name="crisis_corps_lora_workflow",
+    workflow=workflow,
+    description="Logo generation with consistent style LoRA"
+)
 ```
 
 ## Pre-Built Workflows
@@ -214,11 +322,11 @@ For consistent Crisis Corps branding, see [examples/brand_guidelines.md](example
 ## Architecture
 
 ```
-Claude → MCP Server → ComfyUI API
-             ↓              ↓
-      Configuration    WebSocket
-             ↓              ↓
-        Return Data ← Generated Images
+Claude ↔ MCP Server ↔ ComfyUI API
+           ↓             ↓
+     Configuration   WebSocket
+           ↓             ↓
+      Return Data ← Generated Images
 ```
 
 ## Error Handling
@@ -228,6 +336,7 @@ The server includes comprehensive error handling:
 - Invalid workflow specifications
 - Generation failures
 - Timeout handling
+- Model/sampler validation
 
 ## Security Notes
 
@@ -246,7 +355,7 @@ Contributions are welcome! Please:
 
 ## TODO
 
-- [ ] Add LoRA support for logo-specific models
+- [ ] Add LoRA support implementation
 - [ ] Implement ControlNet workflows for consistent shapes
 - [ ] Add image-to-image generation for logo variations
 - [ ] Support for SDXL specific features
@@ -254,6 +363,8 @@ Contributions are welcome! Please:
 - [ ] Caching for frequently used workflows
 - [ ] Auto-background removal for logos
 - [ ] SVG conversion support
+- [ ] Custom node support
+- [ ] Workflow validation improvements
 
 ## License
 
