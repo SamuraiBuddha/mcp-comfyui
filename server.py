@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("mcp-comfyui")
 
 # Default ComfyUI API URL
-COMFYUI_API_URL = os.getenv("COMFYUI_API_URL", "http://127.0.0.1:8188")
+COMFYUI_API_URL = os.getenv("COMFYUI_API_URL", "http://127.0.0.1:8189")
 
 
 class ComfyUIClient:
